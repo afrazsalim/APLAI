@@ -5,9 +5,9 @@
 
 solve(P) :- 
 	puzzles(S, P),
-	write(P),nl,
 	solution(S,R),
-	write(R).
+	writeSudoku(R)
+	.
 
 solution(S,R) :-
 	length(S,N),
@@ -36,3 +36,12 @@ listToArray([],[]).
 listToArray([A|As],[B|Bs]) :-
     array_list(B,A),
     listToArray(As,Bs).
+
+writeSudoku(S) :-
+	writeln("SOLUTION:"),
+	(foreacharg(R, S)
+	do
+		array_list(R, L),
+		writeln(L)
+	)
+	.
