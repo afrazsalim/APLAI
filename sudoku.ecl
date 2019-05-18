@@ -1,12 +1,11 @@
 :- lib(ic).
-:- lib(suspend).
 
 :- compile("sudex_toledo").
 
 solve(P) :- 
 	puzzles(S, P),
 	solution(S,R),
-	writeSudoku(R)
+	writeSudoku(R, P)
 	.
 
 solution(S,R) :-
@@ -14,7 +13,7 @@ solution(S,R) :-
 	dim(R,[N,N]),
 	listToArray(S,TempS),
 	array_list(R,TempS),
-	ic:(R #:: 1..N),
+	R #:: 1..N,
 	(for(I,1,N), param(R,N)
 	do
 		Rw is R[I,1..N],
@@ -37,8 +36,9 @@ listToArray([A|As],[B|Bs]) :-
     array_list(B,A),
     listToArray(As,Bs).
 
-writeSudoku(S) :-
-	writeln("SOLUTION:"),
+writeSudoku(S, Name) :-
+	writeln("SOLUTION OF :"),
+	writeln(Name),
 	(foreacharg(R, S)
 	do
 		array_list(R, L),

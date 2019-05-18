@@ -17,12 +17,12 @@ puzzles(P,sudowiki_nb49):- sudowiki_nb49(P).
 % http://www.standaard.be/artikel/detail.aspx?artikelid=DMF20120629_074
 % Fin bedenkt de moeilijkste sudoku ter wereld
 /*fin(P) :- P =    see inkara2012
-	[[8,_,_,_,_,_,_,_,_],
+   [[8,_,_,_,_,_,_,_,_],
 	[_,_,3,6,_,_,_,_,_],
 	[_,7,_,_,9,_,2,_,_],
 
 	[_,5,_,_,_,7,_,_,_],
-      [_,_,_,_,4,5,7,_,_],
+    [_,_,_,_,4,5,7,_,_],
 	[_,_,_,1,_,_,_,3,_],
 
 	[_,_,1,_,_,_,_,6,8],
