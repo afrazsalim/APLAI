@@ -1,18 +1,17 @@
 :- lib(ic).
+:- compile(helper_functions).
 
-:- compile("sudex_toledo").
 
-solve(P) :- 
-	puzzles(S, P),
-	solution(S,R),
-	writeSudoku(R, P)
-	.
+solve(P) :-
+	read_puzzle(P,S),
+	convert_to_array(R,S),
+	impose_constraint(R),
+	writeln("Printing"),
+	search(R,0,first_fail,indomain,complete,[]),
+	writeSudoku(R, P).
 
-solution(S,R) :-
-	length(S,N),
+impose_constraint(R) :-
 	dim(R,[N,N]),
-	listToArray(S,TempS),
-	array_list(R,TempS),
 	R #:: 1..N,
 	(for(I,1,N), param(R,N)
 	do
@@ -28,13 +27,8 @@ solution(S,R) :-
 		Cube is R[J..J+2,K..K+2],
 		flatten(Cube,LCube),
 		alldifferent(LCube)
-	),
-	search(R,0,first_fail,indomain,complete,[]).
+	).
 
-listToArray([],[]).
-listToArray([A|As],[B|Bs]) :-
-    array_list(B,A),
-    listToArray(As,Bs).
 
 writeSudoku(S, Name) :-
 	writeln("SOLUTION OF :"),

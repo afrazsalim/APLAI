@@ -1,23 +1,29 @@
 :- lib(ic).
 :- lib(ic_global).
 :- import alldifferent/1 from ic_global.
-:- compile("sudex_toledo").
+:- compile(helper_functions).
+
 
 
 solve(Puzzle,Name) :-
-  puzzles(Temp,Name),
-  listToArray(Temp,Lists),
-  array_list(Puzzle,Lists),
-  create_model(Puzzle,Xcos,Ycos),
-  constraints(Xcos,Ycos),
-  search_board(Xcos),
-  search_board(Ycos),
+  read_puzzle(Name,Temp),
+  convert_to_array(Puzzle,Temp),
+  constrain_model(Puzzle,Xcos,Ycos),
+  launch_search(Xcos,Ycos),
   convert_to_board(Xcos,Ycos,Puzzle),
   print_result(Puzzle).
 
 
 
-%convert_board_to_array(Board,Puzzle) :-
+
+launch_search(Xcos,Ycos) :-
+  search_board(Xcos),
+  search_board(Ycos).
+
+constrain_model(Puzzle,Xcos,Ycos) :-
+  create_model(Puzzle,Xcos,Ycos),
+  constraints(Xcos,Ycos).
+
 
 
 
@@ -100,12 +106,3 @@ create_model(Puzzle,Xco,Yco) :-
 search_board(Result) :-
   term_variables(Result,Vars),
   labeling(Vars).
-
-
-
-  listToArray([],[]).
-  listToArray([A|As],[B|Bs]) :-
-      array_list(B,A),
-      listToArray(As,Bs).
-
-
