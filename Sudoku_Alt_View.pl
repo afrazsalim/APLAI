@@ -72,14 +72,6 @@ block_constraint(Yco) :-
   ).
 
 
-print_result(Result) :-
-    (
-    foreachelem(E,Result,[_,J])
-    do
-    (J =:= 1 -> nl; true),
-    write(" "),
-    ( var(E) -> write("_") ; write(E))
-  ).
 
 
 

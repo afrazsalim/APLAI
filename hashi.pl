@@ -1,9 +1,10 @@
-% Partial solution by Stack Overflow user "jschimpf"
+ % Partial solution by Stack Overflow user "jschimpf"
 % https://stackoverflow.com/questions/20337029/hashi-puzzle-representation-to-solve-all-solutions-with-prolog-restrictions
 
 :- lib(ic).  % uses the integer constraint library
 
 :- compile("hashi_benchmarks.pl"). % imports the given puzzles.
+:- compile("helper_functions").
 
 % 1. bridges run horizontally or vertically
 % 2. bridges run in one straight line
@@ -14,19 +15,19 @@
 
 hashiId(Id) :-
     puzzle(Id, S, Islands),
-    makeboard(Id, S, Islands)
-    .
+    makeboard(Id, S, Islands).
 
 makeboard(Id, S, Islands) :-
     dim(Board, [S, S]),
     Board :: 0..1.0Inf,
-    (multifor([I, J], [1, 1], [S, S]), param(Board) do 
+  /*  (multifor([I, J], [1, 1], [S, S]), param(Board) do
         arg([I, J], Board, 0)
-    ),
+    ),*/
     (foreach((X,Y,N), Islands), param(Board) do
         % the argument is already 0, so this can't be true.
         arg([X, Y], Board, N)
     ),
+    print_result(Board),
     (for(I, 1, S), param(Board, S) do
         Ln is Board[I, 1..S],
         writeln(Ln)
@@ -64,7 +65,7 @@ hashi(Name) :-
               N+E+S+W #= Sum
             ;
             N = S, E = W,
-            
+
             % Constraint 3
             (N #= 0) or (E #= 0)
             )
@@ -81,7 +82,7 @@ print_board(Board, NESW) :-
             Sum is Board[I,J],
             ( Sum > 0 ->
                 write(Sum)
-            ; 
+            ;
                 NS is NESW[I,J,1],
                 EW is NESW[I,J,2],
                 symbol(NS, EW, Char),

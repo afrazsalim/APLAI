@@ -11,6 +11,19 @@ convert_to_array(Puzzle,Temp) :-
 
 
 
+print_result(Result) :-
+      (
+      foreachelem(E,Result,[_,J])
+      do
+      (J =:= 1 -> nl; true),
+      write(" "),
+      ( var(E) -> write("_") ; write(E))
+    ).
+
+
+
+
+
 listToArray([],[]).
 listToArray([A|As],[B|Bs]) :-
       array_list(B,A),
@@ -18,8 +31,11 @@ listToArray([A|As],[B|Bs]) :-
 
 
 create_var_list(Puzzle,Xco,Yco,Result) :-
-   flatten(Puzzle,FirstResult),
-   flatten(Xco,SecondResult),
-   flatten(Yco,ThirdResult),
-   array_concat(FirstResult,SecondResult,Temp),
-   array_concat(ThirdResult,Temp,Result).
+   array_flat(1,Puzzle,FirstResult),
+   array_flat(1,Xco,SecondResult),
+   array_flat(1,Yco,ThirdResult),
+   term_variables(FirstResult,V1),
+   term_variables(SecondResult,V2),
+   term_variables(ThirdResult,V3),
+   append(V2,V1,Temp),
+   append(V3,Temp,Result).

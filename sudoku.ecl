@@ -6,7 +6,6 @@ solve(P) :-
 	read_puzzle(P,S),
 	convert_to_array(R,S),
 	impose_constraint(R),
-	writeln("Printing"),
 	search(R,0,first_fail,indomain,complete,[]),
 	writeSudoku(R, P).
 
