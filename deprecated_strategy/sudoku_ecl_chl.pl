@@ -1,5 +1,5 @@
 
-:- compile("Sudoku_alt_view").
+:- compile("Sudoku_alt_view_dep").
 :- compile("sudoku").
 
 
@@ -22,5 +22,4 @@ channeling_constraints(Puzzle,Xco,Yco) :-
         Puzzle[I,J] #= E,
         element(E,Yco[I],J),
         element(E,Xco[I],I)
-
    ).

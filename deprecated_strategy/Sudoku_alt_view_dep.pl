@@ -49,7 +49,7 @@ constraints(Xco,Yco) :-
    ),
    (
       multifor([S,T],[1,1],[9,9]),foreach(R,Regions),param(Xco,Yco) do  %All entries must be different. This constraint can be left out but
-        Xco[S,T]*9+Yco[S,T] #=R  % but it effects the run-time dramatically.
+        Xco[S,T]*9+Yco[S,T] #=R  % but it effects the run-time dramatically. The conversion is done by converting entries of 2D to 1D.
    ),
    alldifferent(Regions),
    block_constraint(Yco).
@@ -70,10 +70,6 @@ block_constraint(Yco) :-
       ),
       alldifferent(Blocks)
   ).
-
-
-
-
 
 
 create_model(Puzzle,Xco,Yco) :-
