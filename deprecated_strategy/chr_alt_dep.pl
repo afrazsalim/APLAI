@@ -155,49 +155,51 @@ unique_positions @elementX((Xco,Yco),[V1]),elementY((Xco,Yco),[V1Y]),elementX((D
 
 
 
+iterate_outerY_list(_,_,_,[],[]).
 
-iterate_outer_list(_,_,_,[],[],[]).
-
-iterate_outer_list(X,Y,X2,[Y2|T],L1,L2) :-
+iterate_outerY_list(X,Y,X2,[Y2|T],L2) :-
    \+block_constraint(X,Y,X2,Y2),
-    iterate_outer_list(X,Y,X2,T,L1,L2).
+    iterate_outerY_list(X,Y,X2,T,L2).
 
 
-iterate_outer_list(X,Y,X2,[Y2|T],[H|T2],[HS|TS]) :-
+iterate_outerY_list(X,Y,X2,[Y2|T],[HS|TS]) :-
         block_constraint(X,Y,X2,Y2),
-          H = X2,
           HS = Y2,
-          iterate_outer_list(X,Y,X2,T,T2,TS).
+          iterate_outerY_list(X,Y,X2,T,TS).
 
 
-getInvalidValues(_,_,[],_,[],[]).
-getInvalidValues(X,Y,[H|T],ListS,[HF|TF],[HS|TS]) :-
-       iterate_outer_list(X,Y,H,ListS,HF,HS),
-       getInvalidValues(X,Y,T,ListS,TF,TS).
+getInvalidYValues(X,Y,X2,ListS,Result) :-
+       iterate_outerY_list(X,Y,X2,ListS,Result).
+
+
+
+
+iterate_outerX_list(_,_,[],[]).
+iterate_outerX_list(X,Y,[H|T],[R|TS]) :-
+    block_constraint(X,Y,H,Y),
+    R = H,
+    iterate_outerX_list(X,Y,T,TS).
+
+
+iterate_outerX_list(X,Y,[H|T],Result) :-
+      \+block_constraint(X,Y,H,Y),
+      iterate_outerX_list(X,Y,T,Result).
+
+
+
+
+
+
+getInvalidXValues(X,Y,ListS,Result) :-
+    iterate_outerX_list(X,Y,ListS,Result).
 
 
 
 remove_invalid_values(L1,L2,RestF,RestS,NewRestF,NewRestS) :-
       flatten(RestF,FRestF),
       flatten(RestS,SRestS),
-      subtract(L1,FRestF,TempRestF),
-      subtract(L2,SRestS,TempRestS),
-      length(TempRestF,M),
-      length(TempRestS,N),
-      (
-        M =:= 0 ->
-           subtract([1,2,3,4,5,6,7,8,9],FRestF,NewRestF)
-           ;
-           NewRestF = TempRestF
-      ),
-      (
-       N =:= 0 ->
-         subtract([1,2,3,4,5,6,7,8,9],RestS,NewRestS)
-         ;
-         NewRestS = TempRestS
-
-      ).
-
+      subtract(L1,FRestF,NewRestF),
+      subtract(L2,SRestS,NewRestS).
 
 iterate(_,_,_,[],[],[]).
 
@@ -227,40 +229,60 @@ getInvalidEqualValues(X,Y,[H|T],ListS,[HF|TF],[HS|TS]) :-
 remove_from_columnX @ refine, elementX((Xco,Yco),[Val]) \elementX((SXco,Yco),List) <=>
                                                                                 (Xco \= SXco),
                                                                                  length(List,N),
-                                                                                 N >= 2,
+                                                                                 N > 1,
                                                                                  select(Val,List,Rest)|elementX((SXco,Yco),Rest).
 
 
-remove_from_columY @ refine, elementY((Xco,Yco),[Val]) \elementY((SXco,Yco),List) <=>
+remove_from_columY @refine,elementY((Xco,Yco),[Val]) \elementY((SXco,Yco),List) <=>
                                                                                (Xco \= SXco),
                                                                                 length(List,N),
-                                                                                N >= 2,
+                                                                                N > 1,
                                                                                 select(Val,List,Rest)|elementY((SXco,Yco),Rest).
 
 
 
-
-unique_positions @ refine , elementX((Xco,Yco),[V1]),elementY((Xco,Yco),[V1Y])\elementX((FXco,Yco),L1), elementY((FXco,Yco),L2) <=>
-                                                                                      (FXco \= Xco),
-                                                                                      length(L1,N),
-                                                                                      length(L2,M),
-                                                                                      N > 1,
-                                                                                      M > 1,
-                                                                                      getInvalidValues(V1,V1Y,L1,L2,RestF,RestS),
-                                                                                      remove_invalid_values(L1,L2,RestF,RestS,NewRestF,NewRestS)
-                                                                                      |elementX((FXco,Yco),NewRestF), elementY((FXco,Yco),NewRestS).
+unique_positions @elementX((Xco,Yco),[V1]),elementY((Xco,Yco),[V1Y]),elementX((FXco,FYco),[V1]) \elementY((FXco,FYco),ListSecond) #passive
+                                                                                           <=> (Xco \= FXco ; Yco \= FYco),
+                                                                                               member(V1Y,ListSecond),
+                                                                                               select(V1Y,ListSecond,RestSecond)|(RestSecond = [] -> false ;elementY((FXco,FYco),RestSecond)).
 
 
 
-unique_positions @refine,elementX((Xco,Yco),[V1]),elementY((Xco,Yco),[V1Y])\elementX((FXco,FYco),ListF) , elementY((FXco,FYco),ListS)  <=>
-                                                                                                           (Xco \= FXco ; Yco \= FYco),
-                                                                                                            length(ListF,N),
-                                                                                                            length(ListS,M),
-                                                                                                            N > 1,
-                                                                                                            M > 1,
-                                                                                                            getInvalidEqualValues(V1,V1Y,ListF,ListS,RestF,RestS),
-                                                                                                            remove_invalid_values(ListF,ListS,RestF,RestS,NewRestF,NewRestS)
-                                                                                                            |elementX((FXco,FYco),NewRestF) , elementY((FXco,FYco),NewRestS).
+
+unique_positions @elementX((Xco,Yco),[V1]),elementY((Xco,Yco),[V1Y]),elementY((FXco,FYco),[V1Y]) \elementX((FXco,FYco),ListSecond) #passive
+                                                                                                <=> (Xco \= FXco ; Yco \= FYco),
+                                                                                                    member(V1,ListSecond),
+                                                                                                    select(V1,ListSecond,RestSecond)|(RestSecond = [] -> false ;elementX((FXco,FYco),RestSecond)).
+
+
+
+
+unique_block_Y @ elementX((Xco,Yco),[V1]),elementY((Xco,Yco),[V1Y]),elementX((FXco,Yco),[V1])\elementY((FXco,Yco),List) <=>
+                                                                                                     (FXco \= Xco),
+                                                                                                      length(List,N),
+                                                                                                      N > 1,
+                                                                                                      getInvalidYValues(V1,V1Y,V1,List,Rest),
+                                                                                                      flatten(Rest,First),
+                                                                                                      length(First,M),
+                                                                                                      M > 1,
+                                                                                                      subtract(List,First,R)|(R = [] -> false ;elementY((FXco,Yco),R)).
+
+
+
+
+unique_block_X @elementX((Xco,Yco),[V1]),elementY((Xco,Yco),[V1Y]),elementY((FXco,Yco),[V1Y])\elementX((FXco,Yco),List) <=>
+                                                                                                        (FXco \= Xco),
+                                                                                                        length(List,N),
+                                                                                                        N > 1,
+                                                                                                        getInvalidXValues(V1,V1Y,List,Rest),
+                                                                                                        flatten(Rest,First),
+                                                                                                        length(First,M),
+                                                                                                        M > 1,
+                                                                                                        subtract(List,First,R)|(R = [] -> false;elementX((FXco,Yco),R)).
+
+
+
+
 
 
 

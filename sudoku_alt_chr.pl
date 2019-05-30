@@ -1,19 +1,52 @@
 :- use_module(library(chr)).
 :- compile("sudex_toledo").
+:- compile("sort").
 :- chr_type list(T) ---> [] ; [T|list(T)]. %Back to Haskell.
 :- chr_type xco == natural.
 :- chr_type yco == natural.
 :- chr_type coordinates ---> (xco,yco).
 :- chr_type values ---> [natural|list(natural)].
 :- chr_constraint element(+coordinates,+values).
-:- chr_constraint refine/0,start_refine/1,clean/0,insert/0,clean_insert/0,nop.
+:- chr_constraint refine/0,start_refine/1,clean_store/0,insert/0,clean_insert/0,nop.
 
 solve(Name) :-
    puzzles(Puzzle,Name),
    write_data_to_store(Puzzle,1),
    clean_insert,
-   refine.
+   refine,
+   store_element_to_list(1,Result),
+   clean_store,
+   flatten(Result,R),
+   insert_sort(R,Temp),
+   print_out(Temp).
 
+
+print_out([]).
+print_out([P-N|T]) :-
+     write(N),
+     write(" "),
+     (
+      P mod 9 =:= 0 -> writeln(" ") ; true
+     ),
+     print_out(T).
+
+
+
+
+store_element_to_list(10,[]).
+store_element_to_list(X,[H|T]) :-
+     read_elements(X,1,H),
+     NewX is X+1,
+     store_element_to_list(NewX,T).
+
+read_elements(_,10,[]).
+read_elements(X,Y,[H|T]) :-
+   find_chr_constraint(element((X,Y),[R])),
+   Coordinate is X*9+R,
+   Rec = Coordinate-Y,
+   H = Rec,
+   NewY is Y+1,
+   read_elements(X,NewY,T).
 
 write_data_to_store([],_).
 write_data_to_store([H|T],X) :-
@@ -52,10 +85,9 @@ getInvalidValues(X,Y,Xco,List,Result) :-
 
 
 getValues(_,_,_,[],[]).
-getValues(X,Y,Xco,[H|T],[H2|T2]) :-
+getValues(X,Y,Xco,[H|T],[H|T2]) :-
     block_constraint(X,Y,Xco,H),
-    H2 = H,
-getValues(X,Y,Xco,T,T2).
+    getValues(X,Y,Xco,T,T2).
 
 
 getValues(X,Y,Xco,[H|T],List) :-
@@ -64,9 +96,7 @@ getValues(X,Y,Xco,T,List).
 
 
 remove_invalid_values(List1,List2,Rest) :-
-    subtract(List1,List2,Rest),
-    length(Rest,N),
-    N > 0.
+    subtract(List1,List2,Rest).
 
 
 %------------------Insertion Help constraints-----------------------------------------------------------------------------------------------
@@ -83,10 +113,15 @@ clean_insert \ nop <=> true.
 row_const @ element((X,Y),[V]) \ element((X,Yco),[V]) #passive
                                                             <=> (Y \= Yco) | false.
 column_const @ element((X,Y),[V]) \ element((Xco,Y),[V]) #passive
-                                                            <=> (Xco \= X) |false.
-block_const @ element((X,Y),[V]) \ element((Xco,Y),[V1]) #passive
-                                                           <=> (Xco \= X;V \= V1),
-                                                               block_constraint(X,V,Xco,V1)|false.
+                                                         <=> (Xco \= X) |false.
+
+
+block_const @element((X,Y),[V]) \ element((Xco,Y),[V1]) #passive
+                                                  <=> (Xco \= X),
+                                                       block_constraint(X,V,Xco,V1)|false.
+
+
+
 
 
 
@@ -95,32 +130,39 @@ refine_row @ refine, element((X,Y),[V]) \ element((X,Yco),List) <=>
                                           (Y \= Yco),
                                           N > 1,
                                           %member(V,List),!,
-                                          delete(V,List,Rest)| element((X,Yco),Rest).
+                                          select(V,List,Rest)|(Rest = [] -> false ; element((X,Yco),Rest)).
 
 
 refine_colum @ refine,element((X,Y),[V]) \ element((Xco,Y),List) <=>
                                                             length(List,N),
                                                             (X \= Xco),
                                                             N > 1,
-                                                            %member(V,List),!,
-                                                            delete(V,List,Rest) |element((Xco,Y),Rest).
+                                                            member(V,List),
+                                                            select(V,List,Rest) |(Rest = [] -> false;element((Xco,Y),Rest)).
+
 
 refine_bloc @ refine,element((X,Y),[V]) \ element((Xco,Y),List) <=>
-                                                            (X \= Xco ),
+                                                            (X \= Xco),
                                                             length(List,N),
                                                             N > 1,
                                                             getInvalidValues(X,V,Xco,List,Rest),
-                                                            remove_invalid_values(List,Rest,NewRest)|element((Xco,Y),NewRest).
+                                                            length(Rest,M),
+                                                            M > 0,
+                                                            remove_invalid_values(List,Rest,NewRest)|((Rest = [] ;NewRest = []) -> false;element((Xco,Y),NewRest)).
+
+
 
 
 
 
 refine <=> start_refine(2).
 
-launch_search @ start_refine(T),element((X,Y),List) <=>
+launch_search @ start_refine(T),element((X,Y),List)#passive <=>
                                   length(List,N),
                                   N =:= T|member(P,List),element((X,Y),[P]),refine.
 
 
 start_refine(9) <=> true.
 start_refine(N) <=> NewN is N+1,start_refine(NewN).
+
+clean_store \ element(_,_) <=> true.
