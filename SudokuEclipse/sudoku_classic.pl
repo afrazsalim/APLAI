@@ -1,8 +1,8 @@
+:- compile(constraints).
 :- compile(helper_functions).
-:- compile(eclipse_constraints).
 
 solve(P) :-
-	read_puzzle(P,S),
+	puzzles(S,P),
 	convert_to_array(R,S),
 	impose_constraint(R),%See the eclipse_constraints file.
 	search(R,0,first_fail,indomain,complete,[]),

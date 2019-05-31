@@ -91,16 +91,19 @@ unique_block @ elementS((Xco,Yco),[Val]) \ elementS((DXco,DYco),[Val]) #passive 
 row_search @ refine,elementS((Xco,_),[Val]) \ elementS((Xco,DYco),List)
                                                              <=> length(List,N),
                                                                  N >= 2 ,
-                                                                 select(Val,List,Rest) | elementS((Xco,DYco),Rest).
+                                                                 member(Val,List),
+                                                                 delete(List,Val,Rest) | elementS((Xco,DYco),Rest).
 col_search @ refine,elementS((_,Yco),[Val]) \ elementS((DXco,Yco),List)
                                                              <=> length(List,N),
                                                                   N >= 2 ,
-                                                                 select(Val,List,Rest) | elementS((DXco,Yco),Rest).
+                                                                 member(Val,List),
+                                                                 delete(List,Val,Rest) | elementS((DXco,Yco),Rest).
 unique_block @ refine,elementS((Xco,Yco),[Val]) \ elementS((DXco,DYco),List)
                                                              <=> (Xco \= DXco ; Yco \= DYco),
                                                                   length(List,N),
                                                                   N >= 2,
-                                                                  select(Val,List,Rest) ,
+                                                                  member(Val,List),
+                                                                  delete(List,Val,Rest) ,
                                                                   sat_block_constraint(Xco,DXco,Yco,DYco)| elementS((DXco,DYco),Rest).
 
 
@@ -111,7 +114,7 @@ launch_search @ start_refine(N),elementS((Xco,Yco), List) # passive
              <=> length(List, L), L =:= N | member(M, List), elementS((Xco,Yco), [M]), refine.
 
 start_refine(9) <=> true.
-start_refine(N) <=> NN is N + 1, start_refine(NN).
+start_refine(N) <=> NewVal is N + 1, start_refine(NewVal).
 
 cleanup \ elementS(_, _) <=> true.
 cleanup <=> true.

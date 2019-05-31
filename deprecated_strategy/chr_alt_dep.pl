@@ -140,12 +140,12 @@ unique_columnY @ elementY((Xco,Yco),[V]) , elementY((SXco,Yco),[V]) #passive <=>
 
 
 %No two elements should map to same position.
-unique_positions @elementX((Xco,Yco),[V1]),elementY((Xco,Yco),[V1Y]),elementX((FXco,FYco),[V2]) , elementY((FXco,FYco),[V2Y]) #passive
+unique_positions @refine,elementX((Xco,Yco),[V1]),elementY((Xco,Yco),[V1Y]),elementX((FXco,FYco),[V2]) , elementY((FXco,FYco),[V2Y]) #passive
                                                                                          <=> (Xco \= FXco ; Yco \= FYco),isEqual(V1,V1Y,V2,V2Y) |false.
 
 
 %Block Constraint
-unique_positions @elementX((Xco,Yco),[V1]),elementY((Xco,Yco),[V1Y]),elementX((DXco,Yco),[V2]), elementY((DXco,Yco),[V2Y]) #passive
+unique_positions @refine,elementX((Xco,Yco),[V1]),elementY((Xco,Yco),[V1Y]),elementX((DXco,Yco),[V2]),elementY((DXco,Yco),[V2Y]) #passive
                                                                               <=> (DXco \= Xco ),
                                                                                    block_constraint(V1,V1Y,V2,V2Y) |false.
 
@@ -240,8 +240,8 @@ remove_from_columY @refine,elementY((Xco,Yco),[Val]) \elementY((SXco,Yco),List) 
                                                                                 select(Val,List,Rest)|elementY((SXco,Yco),Rest).
 
 
-
-unique_positions @elementX((Xco,Yco),[V1]),elementY((Xco,Yco),[V1Y]),elementX((FXco,FYco),[V1]) \elementY((FXco,FYco),ListSecond) #passive
+/*
+unique_positions @refine,elementX((Xco,Yco),[V1]),elementY((Xco,Yco),[V1Y]),elementX((FXco,FYco),[V1]) \elementY((FXco,FYco),ListSecond) #passive
                                                                                            <=> (Xco \= FXco ; Yco \= FYco),
                                                                                                member(V1Y,ListSecond),
                                                                                                select(V1Y,ListSecond,RestSecond)|(RestSecond = [] -> false ;elementY((FXco,FYco),RestSecond)).
@@ -249,12 +249,12 @@ unique_positions @elementX((Xco,Yco),[V1]),elementY((Xco,Yco),[V1Y]),elementX((F
 
 
 
-unique_positions @elementX((Xco,Yco),[V1]),elementY((Xco,Yco),[V1Y]),elementY((FXco,FYco),[V1Y]) \elementX((FXco,FYco),ListSecond) #passive
+unique_positions @refine,elementX((Xco,Yco),[V1]),elementY((Xco,Yco),[V1Y]),elementY((FXco,FYco),[V1Y]) \elementX((FXco,FYco),ListSecond) #passive
                                                                                                 <=> (Xco \= FXco ; Yco \= FYco),
                                                                                                     member(V1,ListSecond),
                                                                                                     select(V1,ListSecond,RestSecond)|(RestSecond = [] -> false ;elementX((FXco,FYco),RestSecond)).
 
-
+*/
 
 
 unique_block_Y @ elementX((Xco,Yco),[V1]),elementY((Xco,Yco),[V1Y]),elementX((FXco,Yco),[V1])\elementY((FXco,Yco),List) <=>
@@ -279,9 +279,6 @@ unique_block_X @elementX((Xco,Yco),[V1]),elementY((Xco,Yco),[V1Y]),elementY((FXc
                                                                                                         length(First,M),
                                                                                                         M > 1,
                                                                                                         subtract(List,First,R)|(R = [] -> false;elementX((FXco,Yco),R)).
-
-
-
 
 
 
