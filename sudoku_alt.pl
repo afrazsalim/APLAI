@@ -8,7 +8,7 @@ solve(Name) :-
   read_puzzle(Name,Temp),
   convert_to_array(Puzzle,Temp),
   build_model(Puzzle,Model),
-  constrain_model(Model),
+  constrain_model_alt(Model),
   search_board(Model),
   convert_back_to_real(Model,Result),
   print_out(Result).

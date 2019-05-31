@@ -5,11 +5,11 @@
 :- chr_type yco == natural.
 :- chr_type coordinates ---> (xco,yco).
 :- chr_type values ---> [natural|list(natural)].
-:- chr_constraint element(+coordinates,+values).
+:- chr_constraint elementS(+coordinates,+values).
 :- chr_constraint refine/0,start_refine/1,cleanup/0.
 
 
-sovle(Name) :-
+solve(Name) :-
   puzzles(Puzzle,Name),
   once(time(solve_for_once(Puzzle))),
   print_board(1,List),
@@ -40,7 +40,7 @@ print_board(X,[NewList|List]) :-
 
 add_element_to_list(_,10,[]).
 add_element_to_list(X,Y,[V|T]) :-
-  find_chr_constraint(element((X,Y),[V])),
+  find_chr_constraint(elementS((X,Y),[V])),
   NewY is Y+1,
   add_element_to_list(X,NewY,T).
 
@@ -62,11 +62,11 @@ write_to_store([],_,_).
 write_to_store([H|T],Xco,Yco) :-
     (
       var(H) ->
-         (element((Xco,Yco),[1,2,3,4,5,6,7,8,9]),
+         (elementS((Xco,Yco),[1,2,3,4,5,6,7,8,9]),
          NewYco is Yco+1,
          write_to_store(T,Xco,NewYco))
          ;
-         (element((Xco,Yco),[H]),
+         (elementS((Xco,Yco),[H]),
           NewYco is Yco +1,
           write_to_store(T,Xco,NewYco))
     ).
@@ -83,35 +83,35 @@ sat_block_constraint(XcoFirst,XcoSecond,YcoFirst,YcoSecond):-
 
 
 %Unique in row column and block with one element left.
-unique_row @ element((Xco,Yco),[Val]) \ element((Xco,DYco),[Val]) #passive <=> (Yco \= DYco) |false.
-unique_colomn @ element((Xco,Yco),[Val]) \element((DXco,Yco),[Val]) #passive <=> (Xco \= DXco) |false.
-unique_block @ element((Xco,Yco),[Val]) \ element((DXco,DYco),[Val]) #passive <=> (Xco \= DXco ; Yco \= DYco),sat_block_constraint(Xco,DXco,Yco,DYco)|false.
+unique_row @ elementS((Xco,Yco),[Val]) \ elementS((Xco,DYco),[Val]) #passive <=> (Yco \= DYco) |false.
+unique_colomn @ elementS((Xco,Yco),[Val]) \elementS((DXco,Yco),[Val]) #passive <=> (Xco \= DXco) |false.
+unique_block @ elementS((Xco,Yco),[Val]) \ elementS((DXco,DYco),[Val]) #passive <=> (Xco \= DXco ; Yco \= DYco),sat_block_constraint(Xco,DXco,Yco,DYco)|false.
 
 %Propagation rules
-row_search @ refine,element((Xco,_),[Val]) \ element((Xco,DYco),List)
+row_search @ refine,elementS((Xco,_),[Val]) \ elementS((Xco,DYco),List)
                                                              <=> length(List,N),
                                                                  N >= 2 ,
-                                                                 select(Val,List,Rest) | element((Xco,DYco),Rest).
-col_search @ refine,element((_,Yco),[Val]) \ element((DXco,Yco),List)
+                                                                 select(Val,List,Rest) | elementS((Xco,DYco),Rest).
+col_search @ refine,elementS((_,Yco),[Val]) \ elementS((DXco,Yco),List)
                                                              <=> length(List,N),
                                                                   N >= 2 ,
-                                                                 select(Val,List,Rest) | element((DXco,Yco),Rest).
-unique_block @ refine,element((Xco,Yco),[Val]) \ element((DXco,DYco),List)
+                                                                 select(Val,List,Rest) | elementS((DXco,Yco),Rest).
+unique_block @ refine,elementS((Xco,Yco),[Val]) \ elementS((DXco,DYco),List)
                                                              <=> (Xco \= DXco ; Yco \= DYco),
                                                                   length(List,N),
                                                                   N >= 2,
                                                                   select(Val,List,Rest) ,
-                                                                  sat_block_constraint(Xco,DXco,Yco,DYco)| element((DXco,DYco),Rest).
+                                                                  sat_block_constraint(Xco,DXco,Yco,DYco)| elementS((DXco,DYco),Rest).
 
 
 
 
 refine <=> start_refine(2).
-launch_search @ start_refine(N),element((Xco,Yco), List) # passive
-             <=> length(List, L), L =:= N | member(M, List), element((Xco,Yco), [M]), refine.
+launch_search @ start_refine(N),elementS((Xco,Yco), List) # passive
+             <=> length(List, L), L =:= N | member(M, List), elementS((Xco,Yco), [M]), refine.
 
 start_refine(9) <=> true.
 start_refine(N) <=> NN is N + 1, start_refine(NN).
 
-cleanup \ element(_, _) <=> true.
+cleanup \ elementS(_, _) <=> true.
 cleanup <=> true.

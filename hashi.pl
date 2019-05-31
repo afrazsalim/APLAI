@@ -24,7 +24,7 @@ make_board(Id, S, Islands, Board) :-
     % max 8 bridges for one island (2 in each direction)
     Board #:: 0..8,
     (foreachindex([I,J], Board), param(Islands, Board) do
-        (in_islands(Islands, (I, J, N)) -> 
+        (in_islands(Islands, (I, J, N)) ->
             arg([I,J], Board, N)
         ;
             arg([I,J], Board, 0)
@@ -44,7 +44,7 @@ in_islands([(A,B,_)|Rest], (X, Y, N)):-
 connected_constraints(Board, NESW, Islands) :-
     (SinkX, SinkY, _) is Islands[1],
     len(Islands, TempNb),
-    % Needed for sink netflow comparison. 
+    % Needed for sink netflow comparison.
     NbIslands is TempNb - 1,
     dim(NESW, Dim),
     dim(Flow, Dim),
@@ -70,16 +70,15 @@ connected_constraints(Board, NESW, Islands) :-
             )
         ;
             % Each non sink island adds one to FlowCount
-            ( I != SinkX, J != SinkY -> FlowCount is FlowCount + 1)
+            ( I \= SinkX, J \= SinkY -> FlowCount is FlowCount + 1)
         )
-    )
+    ),
     % 5. net flow at sink equals the amount of Islands - 1.
-    FlowCount = NbIslands
-    .
+    FlowCount = NbIslands.
 
 
 
-hashi_board(Board, Islands):- 
+hashi_board(Board, Islands):-
     dim(Board, [Imax,Jmax]),
     dim(NESW, [Imax,Jmax,4]),   % 4 variables N,E,S,W for each field
     ( foreachindex([I,J],Board), param(Board,NESW,Imax,Jmax) do
@@ -112,7 +111,7 @@ hashi_board(Board, Islands):-
           N+E+S+W #= Sum
         ;
           % Not on an island
-          N = S, 
+          N = S,
           E = W,
 
           % Constraint 3
@@ -159,7 +158,7 @@ hashi(Name) :-
               N+E+S+W #= Sum
             ;
               % Not on an island
-              N = S, 
+              N = S,
               E = W,
 
               % Constraint 3
@@ -234,4 +233,3 @@ board(wikipedia,
  puzzle(0, 4, P) :-
     P = [ (1,1,2), (1,4,2),
           (4,1,2), (4,4,2)].
-
