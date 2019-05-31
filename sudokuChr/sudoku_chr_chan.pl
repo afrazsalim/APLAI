@@ -16,11 +16,42 @@ solve(Name) :-
   puzzles(Puzzle,Name),
   build_constraint_store(Puzzle,1),
   write_data_to_store(Puzzle,1),
-  remove_insert.
+  remove_insert,
+  refine,
+  print_board(1,List),
+  clean_store,
+  write_out(List,1).
+
+
+
+  write_out([],_).
+  write_out([H|T],I) :-
+  print_out(H),
+  writeln(" "),
+  NewI is I+1,
+  write_out(T,NewI).
+
+
+  print_out([]).
+  print_out([H|T]) :-
+  write(H),
+  write(" "),
+  print_out(T).
+
+  print_board(10,[]).
+  print_board(X,[NewList|List]) :-
+  add_element_to_list(X,1,NewList),
+  NewX is X+1,
+  print_board(NewX,List).
 
 
 
 
+add_element_to_list(_,10,[]).
+add_element_to_list(X,Y,[V|T]) :-
+    find_chr_constraint(elementS((X,Y),[V])),
+    NewY is Y+1,
+  add_element_to_list(X,NewY,T).
 
 
 build_constraint_store([],_).
@@ -65,8 +96,39 @@ write_elem([H|T],X,Y) :-
          NewY is Y+1,
          write_elem(T,X,NewY).
 
+sat_block_constraint(XcoFirst,XcoSecond,YcoFirst,YcoSecond):-
+           RowFirst is div((XcoFirst-1),3),
+           RowSecond is div((XcoSecond-1),3),
+           ColFirst is div((YcoFirst-1),3),
+           ColSecond is div((YcoSecond-1),3),
+           RowFirst =:= RowSecond,
+           ColFirst =:= ColSecond.
+
+block_constraint(Xco,Yco,SXco,SYco) :-
+         RowFirst is div((Xco-1),3),
+         RowSecond is div((SXco-1),3),
+         ColFirst is div((Yco-1),3),
+         ColSecond is div((SYco-1),3),
+         RowFirst =:= RowSecond,
+         ColFirst =:= ColSecond.
 
 
+getInvalidValues(X,Y,Yco,List,Result) :-
+        getValues(X,Y,Yco,List,Result).
+
+
+getValues(_,_,_,[],[]).
+     getValues(X,Y,Yco,[H|T],[H|T2]) :-
+       block_constraint(X,Y,H,Yco),
+     getValues(X,Y,Yco,T,T2).
+
+
+getValues(X,Y,Yco,[H|T],List) :-
+   \+block_constraint(X,Y,H,Yco),
+   getValues(X,Y,Yco,T,List).
+
+remove_invalid_values(List1,List2,Rest) :-
+ subtract(List1,List2,Rest).
 
 
 %---------------------------------------------------------------Insert help ----------------------------------------------------------
@@ -149,18 +211,42 @@ refine_bloc @ refine,tuple((X,Y),[V]) \ tuple((X,Yco),List) <=>
 
 channeling @ elementS((X,Y),[E]) \ tuple((E,Y),[V]) #passive <=>
                                                      (V \= X) |false.
-/*
-channeling @ tuple((E,Y),[V]) \ elementS((V,Y),[E]) #passive <=>
-                                            (E \= V) |false.
-*/
+
+ channeling @tuple((E,Y),[X]) \ elementS((X,Y),[V])  #passive <=>
+                                              (V \= E) |false.
+
+
 
 channeling_remove_elem @ refine,elementS((X,Y),[E]) \tuple((E,Y),List) <=>
                                                                length(List,N),
                                                                N > 1,
-                                                               member(X,List) | tuple((X,E),[Y]).
-/*
+                                                              member(X,List) | tuple((E,Y),[X]).
+
+
+
+
 channeling_remove_elem @ refine,tuple((E,Y),[X]) \ elementS((X,Y),List) <=>
                                                                length(List,M),
                                                                M > 1,
                                                                member(E,List) | elementS((X,Y),[E]).
-*/
+
+
+%-----------------------------------------------------------------search on both variables -----------------------------------------------------------------------
+refine <=> start_refine(2).
+
+%Search on both models.
+
+launch_search @ start_refine(T),tuple((X,Y),List)#passive <=>
+                                                  length(List,N),
+                                                  N =:= T|member(P,List),tuple((X,Y),[P]),refine.
+
+launch_search @ start_refine(N),elementS((Xco,Yco), List) # passive
+                                       <=> length(List, L), L =:= N | member(M, List), elementS((Xco,Yco), [M]), refine.
+
+
+
+start_refine(9) <=> true.
+start_refine(N) <=> NewN is N+1,start_refine(NewN).
+
+clean_store \ tuple(_,_) <=> true.
+clean_store \ elementS(_,_) <=> true.
