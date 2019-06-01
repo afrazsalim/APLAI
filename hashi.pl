@@ -2,6 +2,7 @@
 % https://stackoverflow.com/questions/20337029/hashi-puzzle-representation-to-solve-all-solutions-with-prolog-restrictions
 
 :- lib(ic).  % uses the integer constraint library
+:- lib(tentative).
 
 :- compile("hashi_benchmarks.pl"). % imports the given puzzles.
 :- compile("helper_functions").
@@ -16,10 +17,10 @@
 % NOT FINISHED
 solve_hashi(Id) :-
     puzzle(Id, S, Islands),
-    make_board(Id, S, Islands, Board),
+    make_board(S, Islands, Board),
     hashi_board(Board).
 
-make_board(Id, S, Islands, Board) :-
+make_board(S, Islands, Board) :-
     dim(Board, [S, S]),
     % max 8 bridges for one island (2 in each direction)
     Board #:: 0..8,
@@ -38,45 +39,82 @@ make_board(Id, S, Islands, Board) :-
 % Checks if (X, Y, N) is contained in the Islands list
 in_islands([], (_, _, _)) :- false.
 in_islands([(X,Y,N)|_], (X, Y, N)).
-in_islands([(A,B,_)|Rest], (X, Y, N)):-
+in_islands([(_,_,_)|Rest], (X, Y, N)):-
     in_islands(Rest, (X, Y, N)).
 
+test(Board) :-
+    dim(Board, Size),
+    element(1, Size, X),
+    element(2, Size, Y),
+    write(X),
+    write(Y)
+    .
+
+get_island_amount(Islands, N) :-
+    length(Islands, N).
+
+get_random_island(Islands, (IslX, IslY, IslN)) :-
+    random_element(Islands, (IslX, IslY, IslN)).
+
 connected_constraints(Board, NESW, Islands) :-
-    (SinkX, SinkY, _) is Islands[1],
-    len(Islands, TempNb),
+    random_element(Islands, (SinkX, SinkY, _)),
+    write(SinkX),nl,
+    write(SinkY),nl,
+    length(Islands, TempNb),
     % Needed for sink netflow comparison. 
     NbIslands is TempNb - 1,
+    FlowCount is 0,
     dim(NESW, Dim),
     dim(Flow, Dim),
-    (foreachindex([I,J,_], NESW), param(NESW, Board, Flow) do
+    Flow #:: -1.0Inf..1.0Inf, 
+    dim(Board, Size),
+    (multifor([I,J], [1,1], Size), param(NESW, Board, Flow, FlowCount, SinkX, SinkY, Size) do
         FlowN is Flow[I, J, 1],
         FlowE is Flow[I, J, 2],
         FlowS is Flow[I, J, 3],
         FlowW is Flow[I, J, 4],
 
-        (Board[I, J] == 0 ->
-            (NESW[I, J] == [](0,0,0,0) ->
+        (arg([I,J], Board, 0) ->
+            (arg([I, J], NESW, [](0,0,0,0)) ->
                 % 1. If no island and no bridges -> flow is (0, 0, 0, 0).
                 arg([I, J], Flow, [](0, 0, 0, 0))
-            ;
-                % 2. If no island, the sum of flows on bridges = 0.
-                FlowN + FlowE + FlowS + FlowW = 0,
-
+            ;  
                 % 3. If bridge cell has flow in direction, cell in that direction should have negative flow in opposite direction.
-                ( FlowN > 0 -> Flow[I-1, J, 3] #= - FlowN ; Flow[I-1, J, 3] = 0),
-                ( FlowS > 0 -> Flow[I+1, J, 1] #= - FlowS ; Flow[I+1, J, 1] = 0),
-                ( FlowE > 0 -> Flow[I, J+1, 1] #= - FlowE ; Flow[I, J+1, 1] = 0),
-                ( FlowW > 0 -> Flow[I, J-1, 1] #= - FlowW ; Flow[I, J-1, 1] = 0)
+                ( I > 1 ->
+                    ( FlowN #\= 0 *-> Flow[I-1, J, 3] #= -FlowN ; Flow[I-1, J, 3] #= 0)
+                ;
+                    true
+                )
+                ,
+                % if I equals XSize (on border)
+                ( element(1, Size, I) ->
+                    true
+                ;
+                    ( FlowS #\= 0 *-> Flow[I+1, J, 1] #= -FlowS ; Flow[I+1, J, 1] #= 0)
+                ),
+                ( J > 1 ->
+                    ( FlowW #\= 0 *-> Flow[I, J-1, 2] #= -FlowW ; Flow[I, J-1, 2] #= 0)
+                ;
+                    true
+                ),
+                % if J equals YSize (on border)
+                ( element(2, Size, J) ->
+                    true
+                ;
+                    ( FlowE #\= 0 *-> Flow[I, J+1, 4] #= -FlowE ; Flow[I, J+1, 4] #= 0)         
+                ),
+                % 2. If no island, the sum of flows on bridges = 0.
+                FlowN + FlowE + FlowS + FlowW #= 0
             )
         ;
-            % Each non sink island adds one to FlowCount
-            ( I != SinkX, J != SinkY -> FlowCount is FlowCount + 1)
+            % 4. Each non sink island adds one to FlowCount
+            ( (I ~= SinkX ; J ~= SinkY) -> FlowCount + 1 ; true)
         )
-    )
+    ),
     % 5. net flow at sink equals the amount of Islands - 1.
-    FlowCount = NbIslands
+    FlowCount #= NbIslands,
+    labeling(Flow)
     .
-
 
 
 hashi_board(Board, Islands):- 
@@ -235,3 +273,5 @@ board(wikipedia,
     P = [ (1,1,2), (1,4,2),
           (4,1,2), (4,4,2)].
 
+% Example:
+% connected_constraints([]([](2,0,0,2), [](0,0,0,0), [](0,0,0,0), [](2,0,0,2)), []([]([](0,1,1,0), [](0,1,0,1), [](0,1,0,1), [](0,0,1,1)),[]([](1,0,1,0), [](0,0,0,0), [](0,0,0,0), [](1,0,1,0)),[]([](1,0,1,0), [](0,0,0,0), [](0,0,0,0), [](1,0,1,0)),[]([](0,1,0,1), [](0,1,0,1), [](0,1,0,1), [](0,0,1,1))),[(1,1,2), (1,4,2), (4,1,2), (4,4,2)])
